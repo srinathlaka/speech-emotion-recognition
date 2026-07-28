@@ -3,7 +3,8 @@
 Classify the emotion in a spoken audio clip (angry, calm, happy, sad, fearful, disgust,
 neutral, surprised) by converting sound into mel-spectrograms and training a CNN.
 
-> **Live demo:** _deployment link coming soon_
+> **Live demo:** https://speech-emotion-recognition-apc1.onrender.com
+> _(free tier — the first request after idle takes ~1 min to wake up)_
 
 ## 🚀 Demo
 
