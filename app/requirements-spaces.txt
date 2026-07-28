@@ -1,5 +1,0 @@
-# Dependencies for Hugging Face Spaces (CPU inference)
-gradio
-torch
-librosa
-numpy

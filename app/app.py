@@ -1,48 +1,27 @@
-"""Gradio demo for the speech emotion classifier.
+"""Gradio demo for the speech emotion classifier (ONNX runtime).
 
-    conda activate audioml
-    cd app && python app.py
+Local:
+    python app.py
+Deployment (Render etc.) binds to the PORT env var automatically.
 """
 
+import os
 import numpy as np
 import librosa
-import torch
-import torch.nn as nn
+import onnxruntime as ort
 import gradio as gr
 
 SR = 22050
 N_MELS = 128
 MAX_LEN = 130
-MODEL_PATH = "../models/best_model.pt"
 EMOTIONS = ["angry", "calm", "disgust", "fearful",
             "happy", "neutral", "sad", "surprised"]
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                          "..", "models", "emotion_cnn.onnx")
 
-
-class EmotionCNN(nn.Module):
-    def __init__(self, n_classes=8):
-        super().__init__()
-        self.features = nn.Sequential(
-            nn.Conv2d(1, 16, 3, padding=1), nn.BatchNorm2d(16), nn.ReLU(), nn.MaxPool2d(2),
-            nn.Conv2d(16, 32, 3, padding=1), nn.BatchNorm2d(32), nn.ReLU(), nn.MaxPool2d(2),
-            nn.Conv2d(32, 64, 3, padding=1), nn.BatchNorm2d(64), nn.ReLU(), nn.MaxPool2d(2),
-        )
-        with torch.no_grad():
-            n_flat = self.features(torch.zeros(1, 1, N_MELS, MAX_LEN)).flatten(1).shape[1]
-        self.classifier = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(n_flat, 128), nn.ReLU(), nn.Dropout(0.3),
-            nn.Linear(128, n_classes),
-        )
-
-    def forward(self, x):
-        return self.classifier(self.features(x))
-
-
-model = EmotionCNN().to(device)
-model.load_state_dict(torch.load(MODEL_PATH, map_location=device, weights_only=True))
-model.eval()
+session = ort.InferenceSession(MODEL_PATH, providers=["CPUExecutionProvider"])
+input_name = session.get_inputs()[0].name
 
 
 def fix_width(mel_db, max_len=MAX_LEN):
@@ -56,14 +35,19 @@ def wav_to_input(path):
     y, _ = librosa.load(path, sr=SR)
     mel_db = librosa.power_to_db(librosa.feature.melspectrogram(y=y, sr=SR, n_mels=N_MELS), ref=np.max)
     mel_db = (fix_width(mel_db) + 80.0) / 80.0  # scale dB to [0, 1], same as training
-    return torch.tensor(mel_db, dtype=torch.float32)[None, None].to(device)
+    return mel_db[None, None].astype(np.float32)  # (1, 1, 128, 130)
+
+
+def softmax(x):
+    e = np.exp(x - x.max())
+    return e / e.sum()
 
 
 def predict(audio_path):
     if audio_path is None:
         return {}
-    with torch.no_grad():
-        probs = torch.softmax(model(wav_to_input(audio_path)), dim=1)[0].cpu().numpy()
+    logits = session.run(None, {input_name: wav_to_input(audio_path)})[0][0]
+    probs = softmax(logits)
     return {emo: float(p) for emo, p in zip(EMOTIONS, probs)}
 
 
@@ -78,4 +62,5 @@ demo = gr.Interface(
 )
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(server_name="0.0.0.0",
+                server_port=int(os.environ.get("PORT", 7860)))
