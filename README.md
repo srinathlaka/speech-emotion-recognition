@@ -3,7 +3,7 @@
 Classify the emotion in a spoken audio clip (angry, calm, happy, sad, fearful, disgust,
 neutral, surprised) by converting sound into mel-spectrograms and training a CNN.
 
-> **Live demo:** _add your Hugging Face Spaces link here_
+> **Live demo:** _deployment link coming soon_
 
 ## 🚀 Demo
 
@@ -11,11 +11,11 @@ Upload or record a clip → the model predicts the emotion with confidence score
 
 ![app demo](app/demo.png)
 
-**Try it yourself:**
+**Try it yourself** (the app runs on ONNX Runtime, no PyTorch needed):
 
 ```bash
-conda activate audioml
 cd app
+pip install -r requirements.txt
 python app.py
 ```
 
@@ -28,7 +28,9 @@ clip. A hosted version is linked at the top of this README.
    turning an audio problem into an image-classification problem.
 2. **CNN classifier** — a 3-block convolutional network (Conv → BatchNorm → ReLU → MaxPool)
    learns the visual signatures of each emotion.
-3. **Gradio app** — drag-drop a clip and get the predicted emotion.
+3. **Gradio app** — drag-drop a clip and get the predicted emotion. The trained model is
+   exported to **ONNX** so the app runs on the lightweight `onnxruntime` (no PyTorch) for
+   cheap deployment.
 
 ## 📊 Dataset
 
@@ -90,8 +92,11 @@ SpeechEmotionML/
 ├── notebooks/
 │   ├── 01_explore_audio.ipynb      # EDA + spectrograms
 │   └── 02_features_and_model.ipynb # features, split, CNN, training, evaluation
-├── app/app.py          # Gradio demo
-├── models/             # trained model + confusion matrix
+├── export_onnx.py      # PyTorch model -> ONNX
+├── app/
+│   ├── app.py          # Gradio demo (ONNX Runtime)
+│   └── requirements.txt # lightweight deploy deps
+├── models/             # trained model (.pt / .onnx) + confusion matrix
 └── README.md
 ```
 
@@ -100,5 +105,6 @@ SpeechEmotionML/
 - **Data leakage matters:** a speaker-independent split gives a far more honest number
   than the random splits common in tutorials.
 - **Diagnosing under- vs over-fitting** from the training curves guided every improvement.
+- **Deployment:** exporting to ONNX let the demo run without PyTorch, small enough for a free host.
 - **Next steps:** class weights for the imbalanced `neutral` class, arousal-based grouping,
   saving exact train-time normalization constants, and trying a pretrained audio backbone.
