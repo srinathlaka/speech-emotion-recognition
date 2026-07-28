@@ -1,0 +1,14 @@
+# Core ML
+# NOTE: install torch separately with CUDA:
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+librosa
+scikit-learn
+numpy
+pandas
+matplotlib
+seaborn
+gradio
+jupyter
+tqdm
+soundfile
