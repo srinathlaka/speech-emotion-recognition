@@ -11,6 +11,17 @@ Upload or record a clip → the model predicts the emotion with confidence score
 
 ![app demo](app/demo.png)
 
+**Try it yourself:**
+
+```bash
+conda activate audioml
+cd app
+python app.py
+```
+
+Then open the local URL it prints (e.g. `http://127.0.0.1:7860`) and drop in a `.wav`
+clip. A hosted version is linked at the top of this README.
+
 ## 🧠 How it works
 
 1. **Audio → Spectrogram** — each clip becomes a mel-spectrogram with `librosa`,
@@ -68,13 +79,8 @@ pip install -r requirements.txt
 
 ## ▶️ Run
 
-**Notebooks** (explore + train): open `notebooks/` in Jupyter/VS Code.
-
-**Demo app:**
-```bash
-cd app
-python app.py
-```
+- **Notebooks** (explore + train): open `notebooks/` in Jupyter/VS Code and run top to bottom.
+- **Demo app:** see [Demo](#-demo) above.
 
 ## 📁 Structure
 
